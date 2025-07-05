@@ -1,4 +1,4 @@
-
+// apiError
     export class apiError extends Error {
 
         constructor(

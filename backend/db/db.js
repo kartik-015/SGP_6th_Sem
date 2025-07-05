@@ -13,7 +13,7 @@ export const connectDb =  async () => {
         catch(err){
 
             console.log("Mongo DB connection Error : ",err.message)
-
         }
+        
 
 }

@@ -1,5 +1,5 @@
 
-
+// apiError
 export class apiResponse {
 
         constructor(

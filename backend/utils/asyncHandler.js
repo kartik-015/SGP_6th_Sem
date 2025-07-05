@@ -1,7 +1,7 @@
 
 
 // Higher Order function which take function as an argument
-
+//asyncHandler
 
 export const asyncHandler = (fn) => async (req, res, next)=> {
 

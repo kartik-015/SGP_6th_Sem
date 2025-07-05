@@ -10,7 +10,7 @@ import { app } from './app.js'
 
 const PORT = process.env.PORT || 5000
 
-// promises
+// promises send by this function
 connectDb()
 .then(
         () =>{
