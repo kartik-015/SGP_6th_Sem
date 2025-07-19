@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-
+// import userRouter from '../routes/user.routes.js'
 const app = express()
 
 // middlewares are init here
@@ -20,12 +20,16 @@ app.use(express.urlencoded({
 
 // public assets 
 app.use(cookieParser())
-
-//routes
-
+// checking 
+app.get('/', (req, res) => {
+    res.send('API is running...')
+})
 
 // routes decaleration
+import userRouter from "../routes/user.routes.js"
 
+// routes 
+app.use('/user' ,userRouter)
 
 // localhost
 

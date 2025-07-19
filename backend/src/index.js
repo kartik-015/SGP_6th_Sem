@@ -24,6 +24,7 @@ connectDb()
 .catch(
 
     (err) => {
+        console.log("Error in connecting to DB");
         console.log(err.message);
     }
 
@@ -31,11 +32,7 @@ connectDb()
 
 // initalizing server
 
-app.get('/' , (req,res)=>{
 
-    res.send("<h1>Hello World<h1>");
-
-})
 
 
 
