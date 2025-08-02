@@ -31,10 +31,14 @@ const AdminLogin = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await login({
+      const response = await login({
         username: data.username,
         password: data.password
       }, 'admin');
+      // Redirect to admin dashboard after successful login
+      if (response && response.data && response.data.admin) {
+        navigate('/admin');
+      }
     } catch (error) {
       console.error('Login error:', error);
     } finally {

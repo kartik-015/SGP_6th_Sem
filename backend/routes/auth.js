@@ -368,10 +368,12 @@ router.post('/student/login', [
   }
 });
 
+const { optionalAuth } = require('../middleware/auth');
+
 // @route   GET /api/auth/me
 // @desc    Get current user info
 // @access  Private
-router.get('/me', protectAdmin, protectStudent, async (req, res) => {
+router.get('/me', optionalAuth, async (req, res) => {
   try {
     if (req.admin) {
       return res.json({
