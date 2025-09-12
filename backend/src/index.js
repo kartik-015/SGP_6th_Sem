@@ -1,10 +1,13 @@
 import dotenv from 'dotenv'
 
-dotenv.config(
-        {
-            path: './.env'
-        }
-)
+// Load env from project root first, then fallback to backend/.env
+dotenv.config({ path: '../.env' });
+if (!process.env.MONGO_URL) {
+        dotenv.config({ path: './.env' });
+}
+if (!process.env.MONGO_URL) {
+        console.warn('Warning: MONGO_URL is not set. Check your .env at project root or backend/.env');
+}
 import { connectDb } from '../db/db.js'
 import { app } from './app.js'
 

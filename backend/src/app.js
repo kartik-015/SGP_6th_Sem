@@ -27,9 +27,15 @@ app.get('/', (req, res) => {
 
 // routes decaleration
 import userRouter from "../routes/user.routes.js"
+import equipmentRouter from "../routes/equipment.routes.js"
+import borrowRouter from "../routes/borrow.routes.js"
+import penaltyRouter from "../routes/penalty.routes.js"
 
 // routes 
 app.use('/user' ,userRouter)
+app.use('/equipment', equipmentRouter)
+app.use('/borrow', borrowRouter)
+app.use('/penalty', penaltyRouter)
 
 // localhost
 

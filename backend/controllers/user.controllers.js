@@ -27,25 +27,20 @@ const generateToken = async (userId) =>{
 // Register
 export const register = asyncHandler(async (req, res) => {
 
-    const {name , email, password , role} = req.body;
+    const {name , email, password , role, studentId} = req.body;
 
     if(!name || !email || !password || (role && !['user', 'admin'].includes(role))) {
-      new apiError(400 , "Please fill all fields") 
+      throw new apiError(400 , "Please fill all fields") 
     }
     // Check if user already exists
 try{
     const exitingUser = await User.findOne({ email})
 
     if (exitingUser) {
-      new apiError(400, "User already exists");
+      throw new apiError(400, "User already exists");
     }
 
-    const newUser  = await User.create({
-      name,
-      email,
-      password, // Hash the password
-      role
-    })
+    const newUser  = await User.create({ name, email, password, role, studentId })
 
     // Generate access token
     const {accessToken} = await generateToken(newUser._id);
@@ -57,7 +52,7 @@ try{
     return res.status(201).cookie("accessToken", accessToken, options).json(new apiResponse(201, { user: newUser, accessToken }, "User Registered Successfully"));
 } catch (err) {
     console.error("Error during registration:", err);
-    return res.status(500).json(new apiError(500, "Internal Server Error"));
+    return res.status(500).json(new apiError(500, err.message || "Internal Server Error"));
   }
 });
 
@@ -86,7 +81,7 @@ export const loginUser = asyncHandler(async (req , res) => {
       // password check 
       // console.log(existedUser.password)
       // const isValidPassword = await existedUser.isPasswordCorrect(password)
-      const isValidPassword = existedUser.password == password
+      const isValidPassword = await existedUser.isPasswordCorrect(password)
       if(!isValidPassword){
          // console.log("*")
             return res.status(401).json({
