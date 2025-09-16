@@ -1,15 +1,32 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function Sidebar() {
   return (
-    <aside style={{ width: 220, borderRight: "1px solid #eee", padding: 12 }}>
-      <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Link to="/admin">Dashboard</Link>
-        <Link to="/admin/equipment">Manage Equipment</Link>
-        <Link to="/admin/users">Manage Users</Link>
-        <Link to="/admin/borrowings">Borrow Requests</Link>
-        <Link to="/admin/scan">Scan Borrow</Link>
-        <Link to="/admin/penalties">Penalty Management</Link>
+    <aside className="sidebar">
+      <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text)' }}>
+          Admin Menu
+        </h3>
+      </div>
+      <nav style={{ padding: '12px 0' }}>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin" end>
+          📊 Dashboard
+        </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/equipment">
+          🏓 Manage Equipment
+        </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/users">
+          👥 Manage Users
+        </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/borrowings">
+          📋 Borrow Requests
+        </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/scan">
+          📱 Scan Borrow
+        </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/penalties">
+          💰 Penalty Management
+        </NavLink>
       </nav>
     </aside>
   );

@@ -12,5 +12,15 @@ const equipmentSchema = new mongoose.Schema({
   price: { type: Number, required: true }
 }, { timestamps: true })
 
+// Ensure a unique barcode exists; auto-generate if missing
+equipmentSchema.pre('validate', function(next) {
+  if (!this.barcode) {
+    const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const ts = Date.now().toString(36).toUpperCase();
+    this.barcode = `EQ-${ts}-${rand}`;
+  }
+  next();
+});
+
 const Equipments =  mongoose.model("Equipment", equipmentSchema);
 export default Equipments

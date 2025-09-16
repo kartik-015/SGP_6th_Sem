@@ -43,11 +43,12 @@ try{
     const newUser  = await User.create({ name, email, password, role, studentId })
 
     // Generate access token
-    const {accessToken} = await generateToken(newUser._id);
-    const options = {
-      httpOnly: true, // modified by server only
-      secure: true // use secure cookies in production
-    };
+            const {accessToken} = await generateToken(newUser._id);
+            const options = {
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+            };
     // Send response
     return res.status(201).cookie("accessToken", accessToken, options).json(new apiResponse(201, { user: newUser, accessToken }, "User Registered Successfully"));
 } catch (err) {
@@ -96,8 +97,9 @@ export const loginUser = asyncHandler(async (req , res) => {
       // send cookie
      const loggedInUser =  await User.findById(existedUser._id).select("-password");
       const options = {
-            httpOnly : true,// modified by server only
-            secure : true
+            httpOnly : true,
+            secure : process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
       }
       return res.status(200).cookie("accessToken" , accessToken ,options).json(new apiResponse(200,{user : loggedInUser ,accessToken}, "User Logged in Successfully"));
 })
@@ -107,8 +109,9 @@ export const logoutUser = asyncHandler(async (req ,res) => {
       const _id = req.user._id
       console.log(req.user)
       const options = {
-            httpOnly : true, // modified by server only
-            secure : true
+            httpOnly : true,
+            secure : process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
       }
 
       return res.status(200).clearCookie("accessToken",options).json(new apiResponse(200 ,"User LoggedOut"))

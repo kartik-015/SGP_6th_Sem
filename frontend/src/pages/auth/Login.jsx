@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { login as loginApi } from "../../api/auth.js";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,37 +20,97 @@ export default function Login() {
       if (user && token) {
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", token);
+        toast.success("Logged in successfully");
       }
 
       // Redirect by role
       if (user?.role === "admin") navigate("/admin");
       else navigate("/student");
     } catch (err) {
-      // Provide more specific feedback to the user
-      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+      const message = err.response?.data?.message || "Login failed. Please check your credentials.";
+      setError(message);
+      toast.error(message);
     }
   };
 
   return (
     <div className="auth-bg">
       <div className="auth-card">
-        <h2 className="title">Welcome back</h2>
-        <div className="panel">
-          <form onSubmit={handleLogin} className="space-y">
-            {error && <div className="error">{error}</div>}
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input id="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" />
+        <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '32px' }}>
+            <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700', color: 'var(--text)' }}>
+              Welcome Back
+            </h1>
+            <p style={{ margin: 0, color: 'var(--muted)', fontSize: '16px' }}>
+              Sign in to your Sports Equipment account
+            </p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="space-y" style={{ textAlign: 'left' }}>
+            {error && (
+              <div style={{ 
+                background: 'rgba(239,68,68,0.1)', 
+                color: 'var(--danger)', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                fontSize: '14px',
+                marginBottom: '16px'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            <div className="field" style={{ marginBottom: '20px' }}>
+              <label htmlFor="email" style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: '500', 
+                color: 'var(--text)',
+                fontSize: '14px'
+              }}>
+                Email Address
+              </label>
+              <input 
+                id="email" 
+                className="input" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="Enter your email"
+                type="email"
+                required
+              />
             </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input id="password" className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" />
+            
+            <div className="field" style={{ marginBottom: '24px' }}>
+              <label htmlFor="password" style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: '500', 
+                color: 'var(--text)',
+                fontSize: '14px'
+              }}>
+                Password
+              </label>
+              <input 
+                id="password" 
+                className="input" 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                placeholder="Enter your password"
+                required
+              />
             </div>
-            <div className="actions">
-              <button className="btn" type="submit">Login</button>
-              <span style={{ marginLeft: 12 }}>
-                No account? <Link to="/register">Create one</Link>
-              </span>
+            
+            <button className="btn" type="submit" style={{ width: '100%', marginBottom: '20px' }}>
+              🚀 Sign In
+            </button>
+            
+            <div style={{ textAlign: 'center', fontSize: '14px', color: 'var(--muted)' }}>
+              Don't have an account?{' '}
+              <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '500' }}>
+                Create one
+              </Link>
             </div>
           </form>
         </div>

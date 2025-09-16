@@ -12,7 +12,7 @@ export const StoreEquipment = asyncHandler(async (req, res) => {
     }
 
     try {
-        const newEquipment = await Equipments.create({
+    const newEquipment = await Equipments.create({
             name,
             sport,
             category,
@@ -84,7 +84,11 @@ export const listEquipment = asyncHandler(async (req, res) => {
 // update
 export const updateEquipmentById = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updated = await Equipments.findByIdAndUpdate(id, req.body, { new: true });
+    const body = { ...req.body };
+    if (typeof body.quantity === 'number' && typeof body.available !== 'number') {
+        body.available = Math.max(0, Math.min(body.quantity, body.available ?? body.quantity));
+    }
+    const updated = await Equipments.findByIdAndUpdate(id, body, { new: true });
     if (!updated) throw new apiError(404, "Equipment not found");
     return res.status(200).json(new apiResponse(200, updated, "Equipment updated"));
 });

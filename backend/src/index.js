@@ -10,19 +10,19 @@ if (!process.env.MONGO_URL) {
 }
 import { connectDb } from '../db/db.js'
 import { app } from './app.js'
+import { seedDefaultAdmin } from '../utils/seed.js'
 
 const PORT = process.env.PORT || 5000
 
 // promises send by this function
 connectDb()
 .then(
-        () =>{
-
-            app.listen(PORT , () =>{
-                console.log("Listening on Port :",PORT);
-            })
-
-        }
+    async () =>{
+        await seedDefaultAdmin();
+        app.listen(PORT , () =>{
+            console.log("Listening on Port :",PORT);
+        })
+    }
 )
 .catch(
 

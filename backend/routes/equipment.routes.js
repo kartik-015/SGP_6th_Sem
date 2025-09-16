@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import multer from 'multer';
 import xlsx from 'xlsx';
 import { StoreEquipment, equipmentById, getEquipmentByCategory, listEquipment, updateEquipmentById, deleteEquipmentById } from '../controllers/equipments.controllers.js';
@@ -9,10 +10,32 @@ const router = Router();
 
 router.get('/', listEquipment);
 router.post('/', StoreEquipment);
-router.get('/:id', equipmentById);
-router.put('/:id', updateEquipmentById);
-router.delete('/:id', deleteEquipmentById);
 router.get('/category/:category', getEquipmentByCategory);
+// Flexible lookup: by Mongo _id or barcode (string). Trims input.
+router.get('/lookup/:value', asyncHandler(async (req, res) => {
+  const raw = (req.params.value ?? '').toString().trim();
+  let doc = null;
+  if (mongoose.isValidObjectId(raw)) {
+    doc = await Equipments.findById(raw);
+  }
+  if (!doc) {
+  const isDigits = /^\d+$/.test(raw);
+  const or = [{ barcode: raw }];
+  if (isDigits) or.push({ barcode: Number(raw) });
+  // case-insensitive exact match as a last resort
+  or.push({ barcode: { $regex: `^${raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } });
+  doc = await Equipments.findOne({ $or: or });
+  }
+  if (!doc) return res.status(404).json({ statusCode:404, success:false, message:'Not found' });
+  return res.status(200).json({ statusCode:200, success:true, data: doc });
+}));
+// find equipment strictly by barcode (kept for compatibility)
+router.get('/barcode/:code', asyncHandler(async (req, res) => {
+  const code = (req.params.code ?? '').toString().trim();
+  const doc = await Equipments.findOne({ barcode: code });
+  if (!doc) return res.status(404).json({ statusCode:404, success:false, message:'Not found' });
+  return res.status(200).json({ statusCode:200, success:true, data: doc });
+}));
 
 // Excel import: expects single file field named 'file'
 const upload = multer();
@@ -38,6 +61,11 @@ router.post('/import', upload.single('file'), asyncHandler(async (req, res) => {
   }
   return res.status(201).json({ statusCode:201, success:true, data:{ count: created.length } });
 }));
+
+// CRUD by ID should come after specific routes to avoid shadowing them
+router.get('/:id', equipmentById);
+router.put('/:id', updateEquipmentById);
+router.delete('/:id', deleteEquipmentById);
 
 export default router;
 

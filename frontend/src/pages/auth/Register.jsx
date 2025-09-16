@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { register as registerApi } from "../../api/auth.js";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -20,12 +21,14 @@ export default function Register() {
       if (accountType === "admin") {
         const expected = import.meta.env.VITE_ADMIN_CODE || "SPORTSADMIN";
         if (adminCode.trim() !== expected) {
-          setFormError("Invalid admin code. Register as Student or provide the correct code.");
+          const msg = "Invalid admin code. Register as Student or provide the correct code.";
+          setFormError(msg);
+          toast.error(msg);
           return;
         }
       }
 
-      const res = await registerApi({
+      await registerApi({
         name,
         email,
         password,
@@ -33,11 +36,12 @@ export default function Register() {
         studentId: accountType === 'user' ? studentId : undefined
       });
 
+      toast.success("Registration successful. Please login.");
       // On success, route to login instead of auto-login
       navigate("/login");
     } catch (err) {
       console.error(err);
-      alert("Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
     }
   };
 

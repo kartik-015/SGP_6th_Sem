@@ -17,9 +17,9 @@ export default function StudentLayout() {
   };
 
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar onLogout={handleLogout} />
-      <main style={{ padding: "1rem" }}>
+      <main style={{ paddingTop: '80px' }}>
         <Routes>
           <Route index element={<StudentDashboard />} />
           <Route path="equipment" element={<EquipmentList />} />

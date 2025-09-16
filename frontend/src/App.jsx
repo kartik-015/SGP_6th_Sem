@@ -7,10 +7,27 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import StudentLayout from "./layouts/studentLayout.jsx";
 import PrivateRoute from "./routes/PrivateRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import { useEffect, useState } from 'react';
 
 function App() {
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+    useEffect(() => {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    }, [theme]);
+
     return (
     <BrowserRouter>
+      <button
+        aria-label="Toggle theme"
+        className="btn"
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1000 }}
+      >
+        {theme === 'light' ? 'Dark' : 'Light'} Mode
+      </button>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
 
