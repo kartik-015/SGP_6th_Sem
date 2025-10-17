@@ -1,9 +1,11 @@
 # Node
 node_modules/
 package-lock.json
+pnpm-lock.yaml
 
 # Environment
 .env
+.env.*.local
 
 # Build
 dist/
@@ -17,3 +19,15 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# VSCode
+.vscode/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Optional
+.cache/
+.history/
+

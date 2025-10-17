@@ -1,5 +1,20 @@
 {
-  "dependencies": {
-    "react-qr-barcode-scanner": "^2.1.9"
+  "name": "sports-equipment-management-system",
+  "version": "1.0.0",
+  "description": "Monorepo for backend and frontend of the Sports Equipment Management System",
+  "private": true,
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build": "npm run build:frontend",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
   }
 }
