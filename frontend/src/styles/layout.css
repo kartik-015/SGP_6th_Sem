@@ -1,5 +1,6 @@
 .layout{display:flex;min-height:100vh}
-.sidebar{width:240px;background:#0f172a;color:#e2e8f0;padding:16px;position:sticky;top:0;height:100vh}
+/* Align with resizable sidebar from globals.css */
+.sidebar{width:var(--sidebar-w);background:#0f172a;color:#e2e8f0;padding:16px;position:fixed;left:0;top:0;height:100vh}
 .sidebar a{color:#cbd5e1;text-decoration:none;padding:8px 10px;border-radius:8px;display:block}
 .sidebar a:hover{background:#1e293b}
 .content{flex:1;padding:16px}
