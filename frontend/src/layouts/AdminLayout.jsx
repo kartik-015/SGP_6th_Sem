@@ -1,6 +1,6 @@
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { Outlet } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState, useCallback } from "react";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 
@@ -13,6 +13,11 @@ const PenaltyManagement = lazy(() => import("../pages/admin/PenaltyManagement.js
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = Number(localStorage.getItem('sidebarWidth'));
+    return Number.isFinite(saved) && saved >= 200 && saved <= 500 ? saved : 260;
+  });
+  const [dragging, setDragging] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -20,9 +25,47 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
+  // Apply CSS variable for sidebar width
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-w', `${sidebarWidth}px`);
+  }, [sidebarWidth]);
+
+  const onPointerMove = useCallback((e) => {
+    if (!dragging) return;
+    const min = 200;
+    const max = Math.max(300, window.innerWidth - 320);
+    const next = Math.min(max, Math.max(min, e.clientX));
+    setSidebarWidth(next);
+  }, [dragging]);
+
+  const onPointerUp = useCallback(() => {
+    if (!dragging) return;
+    setDragging(false);
+    localStorage.setItem('sidebarWidth', String(Math.round(sidebarWidth)));
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+  }, [dragging, onPointerMove, sidebarWidth]);
+
+  const startDrag = useCallback((e) => {
+    e.preventDefault();
+    // capture pointer so we keep getting events even if pointer leaves the handle
+    try { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+    setDragging(true);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }, [onPointerMove, onPointerUp]);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
+      {/* Resizer handle between sidebar and content */}
+      <div
+        className="sidebar-resizer"
+        onPointerDown={startDrag}
+        aria-label="Resize sidebar"
+        role="separator"
+        aria-orientation="vertical"
+      />
       <div className="content">
         <header className="topbar">
           <div>

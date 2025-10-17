@@ -9,7 +9,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="container">
+    <div className="container fluid">
       <div className="topbar">
         <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
         <div style={{ fontSize: 14, color: 'var(--muted)' }}>Welcome back, Admin</div>
@@ -27,7 +27,7 @@ export default function AdminDashboard() {
         ))}
       </div>
       
-      <div className="card">
+      <div className="card full-bleed" style={{ padding: 0 }}>
         <h3 style={{ marginTop: 0 }}>Recent Activity</h3>
         <div className="table-wrap">
           <table className="table">
