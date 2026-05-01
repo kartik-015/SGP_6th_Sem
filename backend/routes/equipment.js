@@ -114,9 +114,9 @@ router.get('/:id', async (req, res) => {
 // @access  Private
 router.post('/', protectAdmin, checkAdminPermission('canManageEquipment'), uploadEquipmentImages, handleUploadError, [
   body('name').notEmpty().withMessage('Equipment name is required'),
-  body('category').isIn(['Football', 'Basketball', 'Cricket', 'Tennis', 'Badminton', 'Volleyball', 'Hockey', 'Athletics', 'Swimming', 'Gym', 'Table Tennis', 'Squash', 'Rugby', 'Baseball', 'Other']).withMessage('Valid category is required'),
-  body('quantity.total').isInt({ min: 1 }).withMessage('Total quantity must be at least 1'),
-  body('quantity.available').isInt({ min: 0 }).withMessage('Available quantity cannot be negative')
+  body('category').notEmpty().withMessage('Category is required'),
+  // quantity can be sent as a number (quantity) or object { total, available }
+  body('quantity').notEmpty().withMessage('Quantity is required')
 ], async (req, res) => {
   try {
     // Check for validation errors
@@ -141,11 +141,47 @@ router.post('/', protectAdmin, checkAdminPermission('canManageEquipment'), uploa
       location,
       purchaseInfo,
       tags,
-      isNewArrival
+      isNewArrival,
+      barcode
     } = req.body;
 
     // Process uploaded images
     const images = req.files ? processUploadedFiles(req.files, 'equipment') : [];
+
+    // Normalize barcode if provided or derive from name if provided in body
+    let normalizedBarcode = null;
+    if (barcode) normalizedBarcode = String(barcode).trim().toUpperCase();
+
+    // Normalize quantity: support either number or object
+    let qtyTotal = 1;
+    let qtyAvailable = 1;
+    if (typeof quantity === 'string' && quantity.startsWith('{')) {
+      try {
+        const q = JSON.parse(quantity);
+        qtyTotal = parseInt(q.total || q, 10) || 1;
+        qtyAvailable = parseInt(q.available != null ? q.available : q.total || q, 10) || qtyTotal;
+      } catch (e) {
+        qtyTotal = parseInt(quantity, 10) || 1;
+        qtyAvailable = qtyTotal;
+      }
+    } else if (typeof quantity === 'object' && quantity !== null) {
+      qtyTotal = parseInt(quantity.total || quantity, 10) || 1;
+      qtyAvailable = parseInt((quantity.available != null ? quantity.available : quantity.total) || qtyTotal, 10) || qtyTotal;
+    } else {
+      qtyTotal = parseInt(quantity, 10) || 1;
+      qtyAvailable = qtyTotal;
+    }
+
+    // If barcode provided and existing equipment exists -> merge quantities instead of creating duplicate
+    if (normalizedBarcode) {
+      const existing = await Equipment.findOne({ barcode: normalizedBarcode });
+      if (existing) {
+        existing.quantity.total = (existing.quantity.total || 0) + qtyTotal;
+        existing.quantity.available = (existing.quantity.available || 0) + qtyAvailable;
+        await existing.save();
+        return res.status(200).json({ success: true, message: 'Existing equipment updated (merged)', data: existing });
+      }
+    }
 
     // Create equipment
     const equipment = new Equipment({
@@ -157,8 +193,8 @@ router.post('/', protectAdmin, checkAdminPermission('canManageEquipment'), uploa
       description,
       specifications: specifications ? JSON.parse(specifications) : {},
       quantity: {
-        total: parseInt(quantity.total),
-        available: parseInt(quantity.available),
+        total: qtyTotal,
+        available: qtyAvailable,
         borrowed: 0,
         damaged: 0
       },
@@ -166,7 +202,8 @@ router.post('/', protectAdmin, checkAdminPermission('canManageEquipment'), uploa
       purchaseInfo: purchaseInfo ? JSON.parse(purchaseInfo) : {},
       tags: tags ? JSON.parse(tags) : [],
       isNewArrival: isNewArrival === 'true',
-      images
+      images,
+      barcode: normalizedBarcode
     });
 
     await equipment.save();

@@ -23,8 +23,12 @@ export default function EquipmentList() {
   const handleBorrow = async (payload) => {
     try {
       // payload includes { equipmentId, durationHours, count }
-      await requestBorrow(payload);
-      toast.success('Borrowing request submitted successfully');
+      const res = await requestBorrow(payload);
+      if (res?.approvalRequired) {
+        toast.info('Request created — approval required (counsellor will be notified)');
+      } else {
+        toast.success('Borrowing request submitted successfully');
+      }
       load(); // Refresh the list to update availability
     } catch (error) {
       // Error is already handled by the API interceptor
@@ -48,7 +52,7 @@ export default function EquipmentList() {
             <div style={{ fontWeight:600 }}>{i.name}</div>
             <div style={{ color:'var(--muted)' }}>{i.category}</div>
             <div><span className={`badge ${i.available>0?'success':'danger'}`}>Available: {i.available}</span></div>
-            <BorrowingForm equipmentId={i._id} onSubmit={(payload)=> handleBorrow({ ...payload, equipmentId: i._id })} />
+            <BorrowingForm equipmentId={i._id} maxCount={Number(i.available || i.quantity || 1)} onSubmit={(payload)=> handleBorrow({ ...payload, equipmentId: i._id })} />
           </div>
         ))}
       </div>

@@ -10,6 +10,7 @@ const ManageUsers = lazy(() => import("../pages/admin/ManageUsers.jsx"));
 const BorrowRequests = lazy(() => import("../pages/admin/BorrowRequests.jsx"));
 const ScanBorrow = lazy(() => import("../pages/admin/ScanBorrow.jsx"));
 const PenaltyManagement = lazy(() => import("../pages/admin/PenaltyManagement.jsx"));
+const AdminImport = lazy(() => import("../pages/admin/AdminImport.jsx"));
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -95,6 +96,7 @@ export default function AdminLayout() {
               <Route path="users" element={<ManageUsers />} />
               <Route path="borrowings" element={<BorrowRequests />} />
               <Route path="scan" element={<ScanBorrow />} />
+              <Route path="imports" element={<AdminImport />} />
               <Route path="penalties" element={<PenaltyManagement />} />
             </Routes>
           </Suspense>

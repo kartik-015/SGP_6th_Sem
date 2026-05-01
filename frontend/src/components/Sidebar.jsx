@@ -24,6 +24,9 @@ export default function Sidebar() {
         <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/scan">
           📱 Scan Borrow
         </NavLink>
+        <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/imports">
+          📥 Imports (XLSX)
+        </NavLink>
         <NavLink className={({isActive})=>`nav-link${isActive?' active':''}`} to="/admin/penalties">
           💰 Penalty Management
         </NavLink>

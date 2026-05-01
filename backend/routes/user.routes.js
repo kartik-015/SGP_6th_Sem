@@ -26,10 +26,10 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-  const { name, email, role = 'user', studentId, password = 'changeme' } = req.body;
+  const { name, email, role = 'user', studentId, password = 'changeme', institute, department, year, semester } = req.body;
   const existing = await User.findOne({ email });
   if (existing) return res.status(400).json({ message:'User already exists' });
-  const user = await User.create({ name, email, role, studentId, password });
+  const user = await User.create({ name, email, role, studentId, password, institute, department, year, semester });
   res.status(201).json({ user });
 }));
 

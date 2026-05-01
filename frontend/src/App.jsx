@@ -6,6 +6,7 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import StudentLayout from "./layouts/studentLayout.jsx";
 import PrivateRoute from "./routes/PrivateRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import ApprovalPage from "./pages/Approval.jsx";
 import { useEffect, useState } from 'react';
 
 function App() {
@@ -33,6 +34,8 @@ function App() {
         {/* Public Auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Public approval deep-link */}
+        <Route path="/approvals/:token" element={<ApprovalPage />} />
 
         {/* Admin routes */}
         <Route

@@ -1,6 +1,12 @@
 import Borrowing from "../models/borrow.models.js";
 import Equipments from "../models/equipment.models.js";
 import { User } from "../models/user.models.js";
+import { isStudentFreeNow } from "../utils/schedule.js";
+import { checkRollNow } from "../utils/scheduleCsv.js";
+import Approval from "../models/approval.models.js";
+import Counsellor from "../models/counsellor.models.js";
+import crypto from "crypto";
+import { sendEmail } from "../utils/email.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { apiError } from "../utils/apiError.js";
@@ -10,7 +16,7 @@ export const listBorrow = asyncHandler(async (req, res) => {
     const query = {};
     
     if (mine && req.user?._id) query.studentId = req.user._id;
-    if (status) query.status = status;
+    if (status && String(status).toLowerCase() !== 'all') query.status = status;
     // Default for admin listing: show currently borrowed (active) when no status provided
     if (!status && !mine) query.status = 'active';
     
@@ -91,6 +97,10 @@ export const createBorrowRequest = asyncHandler(async (req, res) => {
         const now = new Date();
         const returnBy = new Date(now.getTime() + durationHours * 60 * 60 * 1000);
 
+        // Load user profile for schedule check
+        const user = await User.findById(studentId).lean();
+
+        // Default borrow payload
         const borrowData = {
             studentId,
             adminId: null,
@@ -98,14 +108,92 @@ export const createBorrowRequest = asyncHandler(async (req, res) => {
             returnBy,
             imageUrl: imageUrl || null,
             count,
-            verifiedName: verifiedName || null,
+            verifiedName: verifiedName || user?.name || null,
             verifiedPhone: verifiedPhone || null,
             status: 'pending'
         };
 
-        console.log('Creating borrow with data:', borrowData);
-    const created = await Borrowing.create(borrowData);
-    return res.status(201).json(new apiResponse(201, { borrow: created }, 'Borrow request created'));
+                // If the request provided a scanned roll string, prefer CSV-based quick-check
+                let check;
+                if (req.body?.roll) {
+                    check = await checkRollNow(req.body.roll);
+                } else {
+                    // Fallback to DB timetable check using user profile
+                    check = await isStudentFreeNow(user || {});
+                }
+
+                // If free, atomically decrement and activate immediately
+                if (check.free) {
+            const updatedEquipment = await Equipments.findOneAndUpdate(
+                { _id: equipmentId, available: { $gte: count } },
+                { $inc: { available: -count }, $set: { status: 'borrowed' } },
+                { new: true }
+            );
+            if (!updatedEquipment) throw new apiError(400, 'Insufficient stock for this item');
+            borrowData.status = 'active';
+            borrowData.borrowedAt = new Date();
+            const created = await Borrowing.create(borrowData);
+            return res.status(201).json(new apiResponse(201, { borrow: created, autoApproved: true }, 'Borrow created and auto-approved (free slot)'));
+        }
+
+        // Not free -> create pending and send approval to counsellor
+        const created = await Borrowing.create(borrowData);
+
+                // Find counsellor: if we used CSV check and it returned counsellor, use that
+                let counsellor = null;
+                if (check && check.counsellor) {
+                    // convert to shape similar to Counsellor model
+                    counsellor = { email: check.counsellor.Email || check.counsellor.EmailAddress || check.counsellor.email, name: check.counsellor.Name || check.counsellor.name };
+                } else {
+                    const department = user?.department;
+                    const year = user?.year;
+                    counsellor = department && year ? await Counsellor.findOne({ department, year, active: true }).lean() : null;
+                }
+
+                let emailResult = null;
+                if (counsellor?.email) {
+            const token = crypto.randomBytes(24).toString('hex');
+            const tokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 6); // 6h
+                        const deptVal = (user?.department) || (check?.parsed?.department) || 'unknown';
+                        const yearVal = (user?.year) || (check?.parsed?.year) || 0;
+
+                        await Approval.create({
+                                borrowId: created._id,
+                                studentId,
+                                equipmentId,
+                                department: deptVal,
+                                year: yearVal,
+                                approverEmail: counsellor.email,
+                                approverName: counsellor.name,
+                                token,
+                                tokenExpiresAt
+                        });
+
+                        const baseUrl = process.env.APP_BASE_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
+                        const approveLink = `${baseUrl}/approvals/${token}`;
+                        const subject = `Borrow approval required for ${user?.name || 'student'}`;
+                        const html = `
+                            <p>Dear ${counsellor.name || 'Counsellor'},</p>
+                            <p>A borrow request was made during a scheduled class.</p>
+                            <ul>
+                                <li>Student: <strong>${user?.name || 'N/A'}</strong> (${user?.studentId || ''})</li>
+                                <li>Department/Year: <strong>${deptVal || 'N/A'}/${yearVal || 'N/A'}</strong></li>
+                                <li>Equipment ID: <strong>${String(equipmentId)}</strong></li>
+                            </ul>
+                            <p>Please review and approve or reject:</p>
+                            <p><a href="${approveLink}">Open approval in system</a> (link valid for 6 hours)</p>
+                        `;
+                            try {
+                                const info = await sendEmail({ to: counsellor.email, subject, html, text: `${subject}\n${approveLink}` });
+                                emailResult = { success: true, info };
+                            } catch (err) {
+                                const msg = err && err.message ? err.message : String(err);
+                                console.error('Failed to send approval email to counsellor:', msg);
+                                emailResult = { success: false, error: msg };
+                            }
+        }
+
+                    return res.status(201).json(new apiResponse(201, { borrow: created, approvalRequired: true, emailResult }, 'Borrow request created; approval required'));
     } catch (error) {
         console.error('Borrow creation error:', error);
         throw error;

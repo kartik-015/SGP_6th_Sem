@@ -15,6 +15,25 @@ export default function EquipmentForm({ initial, onSubmit, onCancel }) {
     });
   }, [initial]);
 
+  // generate a normalized barcode from name (case-insensitive canonical)
+  const generateBarcode = (name) => {
+    if (!name) return '';
+    // keep alphanumerics, uppercase, prefix EQ-
+    const slug = String(name).trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return `EQ-${slug}`.toUpperCase();
+  };
+
+  useEffect(() => {
+    // when not editing, auto-populate barcode from name so similar names map to same barcode
+    if (!isEditing && form.name) {
+      const generated = generateBarcode(form.name);
+      if (!form.barcode || form.barcode.toUpperCase() !== generated) {
+        setForm(prev => ({ ...prev, barcode: generated }));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.name]);
+
   const isEditing = Boolean(initial && (initial._id || initial.id));
 
   const copy = async (text) => {

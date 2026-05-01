@@ -7,16 +7,23 @@ import { toast } from "react-toastify";
 
 export default function ScanBorrow() {
   const [student, setStudent] = useState(null);
+  const [scanning, setScanning] = useState(true);
+  const [lastScanned, setLastScanned] = useState("");
   const [equipmentId, setEquipmentId] = useState("");
   const [category, setCategory] = useState("");
   const [equipments, setEquipments] = useState([]);
   const [durationHours, setDurationHours] = useState(1);
+  const [count, setCount] = useState(1);
   const [message, setMessage] = useState("");
   const [studentName, setStudentName] = useState("");
   const [studentIdInput, setStudentIdInput] = useState("");
   const [item, setItem] = useState(null);
 
   const onScan = async (barcode) => {
+    // ignore repeated scans of the same barcode
+    if (!barcode) return;
+    if (lastScanned && lastScanned === barcode) return;
+    setLastScanned(barcode);
     try{
       const data = await getUserByBarcode(barcode);
       const u = data?.data?.user || data?.user || null;
@@ -24,6 +31,8 @@ export default function ScanBorrow() {
   setStudentName(u?.name || "");
   setStudentIdInput(u?.studentId || barcode || "");
       toast.success('Student found');
+      // stop scanning (unmount scanner) and show borrow UI immediately
+      setScanning(false);
     }catch(err){
       // Auto-create user if not found
       const id = barcode;
@@ -35,6 +44,7 @@ export default function ScanBorrow() {
   setStudentName(u.name);
   setStudentIdInput(u.studentId);
         toast.success('Student created');
+        setScanning(false);
       } else {
         toast.error('Failed to create student');
       }
@@ -52,9 +62,15 @@ export default function ScanBorrow() {
         studentId: student._id, 
         barcode: equipmentId, // use unique ID (barcode)
         durationHours, 
+        count,
+        roll: student.studentId, // include roll so backend can parse and check timetable
         verifiedName: student.name 
       });
       const borrowId = created?.borrow?._id || created?._id;
+      // If approval was required, inform admin that approval workflow is created
+      if (created?.approvalRequired) {
+        toast.info('Request created — approval required (counsellor will be notified)');
+      }
       // Approve immediately so it shows as Active in admin and student lists
       if (borrowId) {
         const { approveBorrow } = await import("../../api/borrow.js");
@@ -97,7 +113,11 @@ export default function ScanBorrow() {
       <div className="card" style={{ marginBottom:12 }}>
         <div className="scanner-box" style={{ padding:8 }}>
           <div style={{ marginTop:8 }}>
-            <ScannerInput onScan={onScan} />
+            {scanning ? (
+              <ScannerInput onScan={onScan} />
+            ) : (
+              <div style={{ padding:12, color:'var(--muted)' }}>Scanner stopped — student detected. Use the form below to assign equipment.</div>
+            )}
           </div>
         </div>
       </div>
@@ -145,7 +165,8 @@ export default function ScanBorrow() {
               ))}
             </select>
             <input className="input" type="number" min={1} placeholder="Duration (hours)" value={durationHours} onChange={(e) => setDurationHours(Math.max(1, Number(e.target.value)))} />
-            <button className="btn" disabled={!item} onClick={assignItem}>Assign Item</button>
+            <input className="input" type="number" min={1} placeholder="Count" value={count} onChange={(e) => setCount(Math.max(1, Number(e.target.value || 1)))} style={{ width: 100 }} />
+            <button className="btn" disabled={!item || Number(item.available) < Number(count)} onClick={assignItem}>Assign Item</button>
           </div>
       {item && (
             <div style={{ marginTop:6, color:'var(--muted)' }}>

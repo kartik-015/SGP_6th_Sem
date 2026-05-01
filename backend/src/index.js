@@ -3,16 +3,19 @@ import { connectDb } from '../db/db.js'
 import { app } from './app.js'
 import { seedDefaultAdmin } from '../utils/seed.js'
 
-// Load env from project root first, then fallback to backend/.env
-dotenv.config({ path: '../.env' });
-dotenv.config({ path: './.env' });
+// Load env from backend/.env with override to ensure fresh values
+dotenv.config({ path: './.env', override: true });
 
 const PORT = process.env.PORT || 5000;
 
 async function start() {
     try {
-        await connectDb();
-        await seedDefaultAdmin();
+        if (process.env.SKIP_DB === 'true') {
+            console.log('SKIP_DB=true, skipping database connect and seeding (dev mode)');
+        } else {
+            await connectDb();
+            await seedDefaultAdmin();
+        }
 
         app.listen(PORT, () => {
             console.log(`Listening on Port: ${PORT}`);

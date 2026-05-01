@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listRequests, approveBorrow, denyBorrow, returnItem } from "../../api/borrow.js";
+import { settlePenalty } from "../../api/penalty.js";
 import { toast } from "react-toastify";
 
 export default function BorrowRequests() {
@@ -30,6 +31,17 @@ export default function BorrowRequests() {
     await returnItem(id);
     toast.success('Item returned');
     load();
+  };
+
+  const handlePayPenalty = async (id) => {
+    try {
+      await settlePenalty(id);
+      toast.success('Penalty marked paid');
+      load();
+    } catch (err) {
+      console.error('Pay penalty error', err);
+      toast.error('Failed to mark penalty as paid');
+    }
   };
 
   const getStatusColor = (status, isOverdue) => {
@@ -122,8 +134,8 @@ export default function BorrowRequests() {
                       </div>
                     )}
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  <td className="actions">
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'flex-end' }}>
                       {row.status === 'pending' && (
                         <>
                           <button className="btn success" onClick={() => handleApprove(row._id)}>
@@ -140,7 +152,7 @@ export default function BorrowRequests() {
                         </button>
                       )}
                       {row.status === 'overdue' && !row.penaltyPaid && (
-                        <button className="btn warning" onClick={() => {/* TODO: Implement penalty payment */}}>
+                        <button className="btn warning" onClick={() => handlePayPenalty(row._id)}>
                           Pay Penalty
                         </button>
                       )}

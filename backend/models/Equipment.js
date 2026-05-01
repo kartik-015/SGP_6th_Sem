@@ -10,11 +10,7 @@ const equipmentSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: [
-      'Football', 'Basketball', 'Cricket', 'Tennis', 'Badminton', 
-      'Volleyball', 'Hockey', 'Athletics', 'Swimming', 'Gym', 
-      'Table Tennis', 'Squash', 'Rugby', 'Baseball', 'Other'
-    ]
+    trim: true
   },
   subcategory: {
     type: String,

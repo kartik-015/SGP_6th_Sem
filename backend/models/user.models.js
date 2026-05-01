@@ -11,7 +11,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'], // You can also add 'HOD', etc.
     default: 'user'
-  }
+  },
+  institute: { type: String, trim: true },
+  department: { type: String, trim: true },
+  year: { type: Number, min: 1, max: 6 },
+  semester: { type: Number, min: 1, max: 8 }
 },
 {
     timestamps: true // Automatically adds createdAt and updatedAt fields

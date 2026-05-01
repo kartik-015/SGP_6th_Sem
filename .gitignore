@@ -1,4 +1,46 @@
-# Node
+# Node modules
+node_modules/
+**/node_modules/
+
+# Environment and secrets
+.env
+.env.*
+env.*
+env.example
+backend/env.*
+backend/.env
+
+# Uploads and user data
+uploads/
+uploads/**
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+
+# Build outputs
+dist/
+build/
+
+# Ignore markdown and documentation files (per request)
+*.md
+
+# Office and data files not to push
+*.xlsx
+*.csv
+
+# Misc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*# Node
 node_modules/
 package-lock.json
 pnpm-lock.yaml

@@ -84,7 +84,7 @@ router.post('/student/register', uploadIdCard, handleUploadError, [
   body('fullName').notEmpty().withMessage('Full name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('phoneNumber').notEmpty().withMessage('Phone number is required'),
-  body('department').notEmpty().withMessage('Department is required'),
+  body('department').optional().isString().withMessage('Department must be a string'),
   body('year').isInt({ min: 1, max: 6 }).withMessage('Year must be between 1 and 6'),
   body('semester').isInt({ min: 1, max: 8 }).withMessage('Semester must be between 1 and 8')
 ], async (req, res) => {
@@ -128,6 +128,25 @@ router.post('/student/register', uploadIdCard, handleUploadError, [
       semester
     } = req.body;
 
+    // Infer department for certain institutional emails (e.g. 23DIT123@charusat.edu.in)
+    let resolvedDepartment = department;
+    try {
+      if ((!resolvedDepartment || resolvedDepartment.toString().trim() === '') && typeof email === 'string') {
+        if (/DIT/i.test(email)) {
+          resolvedDepartment = 'IT';
+        }
+      }
+    } catch (err) {
+      // noop - we'll validate below
+    }
+
+    if (!resolvedDepartment || resolvedDepartment.toString().trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Department is required or could not be inferred from email'
+      });
+    }
+
     // Check if student already exists
     const existingStudent = await Student.findOne({
       $or: [{ studentId }, { email }, { phoneNumber }]
@@ -146,7 +165,7 @@ router.post('/student/register', uploadIdCard, handleUploadError, [
       fullName,
       email: email.toLowerCase(),
       phoneNumber,
-      department,
+      department: resolvedDepartment,
       year: parseInt(year),
       semester: parseInt(semester),
       idCardImage: req.file.path
