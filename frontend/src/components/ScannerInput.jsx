@@ -9,6 +9,8 @@ async function loadScanner(){
   return QrBarcodeScannerComp;
 }
 
+const normalizeScanValue = (value) => String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+
 export default function ScannerInput({ onScan, allowManual = true }) {
   const [error, setError] = useState(null);
   const [manual, setManual] = useState("");
@@ -26,13 +28,18 @@ export default function ScannerInput({ onScan, allowManual = true }) {
       {Scanner && (
       <Scanner
         onUpdate={(err, result) => {
-          if (err) {
-            setError(err?.message || "Scan error");
+          if (err && !result) {
+            const message = String(err?.message || err || "");
+            const benignScanNoise = /notfound|no barcode|no code|not detected|decode|checksum|format/i.test(message);
+            if (!benignScanNoise) {
+              setError(message || "Scan error");
+            }
             return;
           }
           if (result) {
             setError(null);
-            onScan?.(result?.text || "");
+            const scanned = normalizeScanValue(result?.text || result?.value || result?.data || "");
+            if (scanned) onScan?.(scanned);
           }
         }}
         constraints={{ facingMode: "environment" }}
@@ -43,7 +50,7 @@ export default function ScannerInput({ onScan, allowManual = true }) {
       {allowManual && (
         <div className="row" style={{ gap:8, marginTop:8, alignItems:'center' }}>
           <input className="input" placeholder="Enter Student ID (barcode value)" value={manual} onChange={(e)=>setManual(e.target.value)} />
-          <button className="btn" onClick={()=> manual && onScan?.(manual)}>Submit</button>
+          <button className="btn" onClick={()=> { const value = normalizeScanValue(manual); if (value) onScan?.(value); }}>Submit</button>
         </div>
       )}
       <div style={{ marginTop:8, padding:8, background:'#f0f9ff', borderRadius:8, fontSize:12, color:'#0369a1' }}>

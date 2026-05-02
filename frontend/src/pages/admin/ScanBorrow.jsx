@@ -5,6 +5,8 @@ import { requestBorrow } from "../../api/borrow.js";
 import { getByBarcode as getEquipmentByBarcode, getEquipment } from "../../api/equipment.js";
 import { toast } from "react-toastify";
 
+const normalizeBarcode = (value) => String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+
 export default function ScanBorrow() {
   const [student, setStudent] = useState(null);
   const [scanning, setScanning] = useState(true);
@@ -21,21 +23,22 @@ export default function ScanBorrow() {
 
   const onScan = async (barcode) => {
     // ignore repeated scans of the same barcode
-    if (!barcode) return;
-    if (lastScanned && lastScanned === barcode) return;
-    setLastScanned(barcode);
+    const normalized = normalizeBarcode(barcode);
+    if (!normalized) return;
+    if (lastScanned && lastScanned === normalized) return;
+    setLastScanned(normalized);
     try{
-      const data = await getUserByBarcode(barcode);
+      const data = await getUserByBarcode(normalized);
       const u = data?.data?.user || data?.user || null;
   setStudent(u);
   setStudentName(u?.name || "");
-  setStudentIdInput(u?.studentId || barcode || "");
+  setStudentIdInput(u?.studentId || normalized || "");
       toast.success('Student found');
       // stop scanning (unmount scanner) and show borrow UI immediately
       setScanning(false);
     }catch(err){
       // Auto-create user if not found
-      const id = barcode;
+      const id = normalized;
       const email = `${id}@charusat.edu.in`;
       const created = await createUser({ name: id, email, role:'user', studentId: id, password: id });
       const u = created?.user || created?.data?.user || null;
@@ -128,8 +131,9 @@ export default function ScanBorrow() {
             <div className="row" style={{ gap:8, marginBottom:8, alignItems:'center', flexWrap:'wrap' }}>
               <input className="input" placeholder="Enter/Scan Student ID" value={studentIdInput} onChange={(e)=> setStudentIdInput(e.target.value)} />
               <button className="btn" onClick={async()=>{
-                if (!studentIdInput) { toast.error('Enter Student ID'); return; }
-                try { await onScan(studentIdInput); } catch { toast.error('Student not found'); }
+                const value = normalizeBarcode(studentIdInput);
+                if (!value) { toast.error('Enter Student ID'); return; }
+                try { await onScan(value); } catch { toast.error('Student not found'); }
               }} type="button">Find student</button>
             </div>
           )}

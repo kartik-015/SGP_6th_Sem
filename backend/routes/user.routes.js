@@ -14,7 +14,8 @@ router.route('/logout').post(verifyJwt , logoutUser)
 
 // Scan endpoint: find by studentId barcode
 router.get('/scan/:barcode', asyncHandler(async (req, res) => {
-  const user = await User.findOne({ studentId: req.params.barcode }).select("-password");
+  const barcode = String(req.params.barcode || '').trim().replace(/\s+/g, '').toUpperCase();
+  const user = await User.findOne({ studentId: barcode }).select("-password");
   if (!user) return res.status(404).json({ statusCode:404, data:null, message:'Not found', success:false });
   return res.status(200).json({ statusCode:200, data:{ user }, success:true });
 }));
